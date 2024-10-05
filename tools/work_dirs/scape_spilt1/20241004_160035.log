@@ -1,0 +1,349 @@
+2024-10-04 16:00:35,434 - mmpose - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.7.16 (default, Jan 17 2023, 22:20:44) [GCC 11.2.0]
+CUDA available: True
+GPU 0: NVIDIA GeForce RTX 3090
+CUDA_HOME: /usr/local/cuda
+NVCC: Build cuda_11.3.r11.3/compiler.29745058_0
+GCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0
+PyTorch: 1.10.2+cu111
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) Math Kernel Library Version 2020.0.0 Product Build 20191122 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.2.3 (Git Hash 7336ca9f055cf1bfa13efb658fe15dc9b41f0740)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX512
+  - CUDA Runtime 11.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86
+  - CuDNN 8.0.5
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.1, CUDNN_VERSION=8.0.5, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.10.2, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.11.3+cu111
+OpenCV: 4.8.0
+MMCV: 1.3.17
+MMCV Compiler: GCC 9.4
+MMCV CUDA Compiler: 11.1
+MMPose: 0.28.1+4e711d4
+------------------------------------------------------------
+
+2024-10-04 16:00:35,435 - mmpose - INFO - Distributed training: False
+2024-10-04 16:00:36,363 - mmpose - INFO - Config:
+log_level = 'INFO'
+load_from = None
+resume_from = None
+dist_params = dict(backend='nccl')
+workflow = [('train', 1)]
+checkpoint_config = dict(interval=5)
+evaluation = dict(
+    interval=5, metric='PCK', key_indicator='PCK', gpu_collect=True)
+optimizer = dict(
+    type='Adam',
+    lr=0.0002,
+    paramwise_cfg=dict(custom_keys=dict(encoder_sample=dict(lr_mult=0.1))))
+optimizer_config = dict(grad_clip=None)
+lr_config = dict(
+    policy='CosineAnnealing',
+    warmup='linear',
+    warmup_iters=1000,
+    warmup_ratio=0.001,
+    min_lr_ratio=1e-05)
+total_epochs = 210
+log_config = dict(interval=50, hooks=[dict(type='TextLoggerHook')])
+channel_cfg = dict(
+    num_output_channels=1,
+    dataset_joints=1,
+    dataset_channel=[[0]],
+    inference_channel=[0],
+    max_kpt_num=100)
+extra = dict(
+    PRETRAINED_LAYERS=('conv1', 'bn1', 'conv2', 'bn2', 'layer1', 'transition1',
+                       'stage2', 'transition2', 'stage3'),
+    FINAL_CONV_KERNEL=1,
+    STAGE2=dict(
+        NUM_MODULES=1,
+        NUM_BRANCHES=2,
+        BLOCK='BASIC',
+        NUM_BLOCKS=(4, 4),
+        NUM_CHANNELS=(32, 64),
+        FUSE_METHOD='SUM'),
+    STAGE3=dict(
+        NUM_MODULES=4,
+        NUM_BRANCHES=3,
+        BLOCK='BASIC',
+        NUM_BLOCKS=(4, 4, 4),
+        NUM_CHANNELS=(32, 64, 128),
+        FUSE_METHOD='SUM'))
+model = dict(
+    type='TransformerPose',
+    pretrained='torchvision://resnet50',
+    encoder_sample=dict(type='ResNet', depth=50),
+    encoder_query=dict(type='ResNet', depth=50),
+    keypoint_head=dict(
+        type='TokenPose_TB_base',
+        in_channels=2048,
+        transformer=dict(
+            type='Transformer',
+            dim=256,
+            depth=4,
+            heads=8,
+            mlp_dim=512,
+            dropout=0.1,
+            num_keypoints=100,
+            all_attn=False,
+            scale_with_head=True),
+        train_cfg=None,
+        test_cfg=None,
+        dim=256,
+        hidden_heatmap_dim=384,
+        heatmap_dim=4096,
+        apply_multi=True,
+        apply_init=True,
+        loss_keypoint=dict(type='JointsMSELoss', use_target_weight=True)),
+    train_cfg=dict(),
+    test_cfg=dict(
+        flip_test=False,
+        post_process='default',
+        shift_heatmap=True,
+        modulate_kernel=11))
+data_cfg = dict(
+    image_size=[256, 256],
+    heatmap_size=[64, 64],
+    num_output_channels=1,
+    num_joints=1,
+    dataset_channel=[[0]],
+    inference_channel=[0])
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(
+        type='TopDownGetRandomScaleRotation', rot_factor=15,
+        scale_factor=0.15),
+    dict(type='TopDownAffineFewShot'),
+    dict(type='ToTensor'),
+    dict(
+        type='NormalizeTensor',
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]),
+    dict(type='TopDownGenerateTargetFewShot', sigma=2),
+    dict(
+        type='Collect',
+        keys=['img', 'target', 'target_weight'],
+        meta_keys=[
+            'image_file', 'joints_3d', 'joints_3d_visible', 'center', 'scale',
+            'rotation', 'bbox_score', 'flip_pairs', 'category_id', 'flip',
+            'pair'
+        ])
+]
+valid_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='TopDownAffineFewShot'),
+    dict(type='ToTensor'),
+    dict(
+        type='NormalizeTensor',
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]),
+    dict(type='TopDownGenerateTargetFewShot', sigma=2),
+    dict(
+        type='Collect',
+        keys=['img', 'target', 'target_weight'],
+        meta_keys=[
+            'image_file', 'joints_3d', 'joints_3d_visible', 'center', 'scale',
+            'rotation', 'bbox_score', 'flip_pairs', 'category_id', 'flip',
+            'pair'
+        ])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='TopDownAffineFewShot'),
+    dict(type='ToTensor'),
+    dict(
+        type='NormalizeTensor',
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]),
+    dict(type='TopDownGenerateTargetFewShot', sigma=2),
+    dict(
+        type='Collect',
+        keys=['img', 'target', 'target_weight'],
+        meta_keys=[
+            'image_file', 'joints_3d', 'joints_3d_visible', 'center', 'scale',
+            'rotation', 'bbox_score', 'flip_pairs', 'category_id', 'flip',
+            'pair'
+        ])
+]
+data_root = '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100'
+data = dict(
+    samples_per_gpu=16,
+    workers_per_gpu=8,
+    train=dict(
+        type='TransformerPoseDataset',
+        ann_file=
+        '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100/annotations/mp100_split1_train.json',
+        img_prefix=
+        '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100/',
+        data_cfg=dict(
+            image_size=[256, 256],
+            heatmap_size=[64, 64],
+            num_output_channels=1,
+            num_joints=1,
+            dataset_channel=[[0]],
+            inference_channel=[0]),
+        valid_class_ids=None,
+        max_kpt_num=100,
+        num_shots=1,
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(
+                type='TopDownGetRandomScaleRotation',
+                rot_factor=15,
+                scale_factor=0.15),
+            dict(type='TopDownAffineFewShot'),
+            dict(type='ToTensor'),
+            dict(
+                type='NormalizeTensor',
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]),
+            dict(type='TopDownGenerateTargetFewShot', sigma=2),
+            dict(
+                type='Collect',
+                keys=['img', 'target', 'target_weight'],
+                meta_keys=[
+                    'image_file', 'joints_3d', 'joints_3d_visible', 'center',
+                    'scale', 'rotation', 'bbox_score', 'flip_pairs',
+                    'category_id', 'flip', 'pair'
+                ])
+        ]),
+    val=dict(
+        type='TransformerPoseDataset',
+        ann_file=
+        '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100/annotations/mp100_split1_test.json',
+        img_prefix=
+        '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100/',
+        data_cfg=dict(
+            image_size=[256, 256],
+            heatmap_size=[64, 64],
+            num_output_channels=1,
+            num_joints=1,
+            dataset_channel=[[0]],
+            inference_channel=[0]),
+        valid_class_ids=None,
+        max_kpt_num=100,
+        num_shots=1,
+        num_queries=15,
+        num_episodes=200,
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='TopDownAffineFewShot'),
+            dict(type='ToTensor'),
+            dict(
+                type='NormalizeTensor',
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]),
+            dict(type='TopDownGenerateTargetFewShot', sigma=2),
+            dict(
+                type='Collect',
+                keys=['img', 'target', 'target_weight'],
+                meta_keys=[
+                    'image_file', 'joints_3d', 'joints_3d_visible', 'center',
+                    'scale', 'rotation', 'bbox_score', 'flip_pairs',
+                    'category_id', 'flip', 'pair'
+                ])
+        ]),
+    test=dict(
+        type='TransformerPoseDataset',
+        ann_file=
+        '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100/annotations/mp100_split1_test.json',
+        img_prefix=
+        '/data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/zero-shot-CAPE/Pose-for-Everything/data/mp100/',
+        data_cfg=dict(
+            image_size=[256, 256],
+            heatmap_size=[64, 64],
+            num_output_channels=1,
+            num_joints=1,
+            dataset_channel=[[0]],
+            inference_channel=[0]),
+        valid_class_ids=None,
+        max_kpt_num=100,
+        num_shots=1,
+        num_queries=15,
+        num_episodes=200,
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='TopDownAffineFewShot'),
+            dict(type='ToTensor'),
+            dict(
+                type='NormalizeTensor',
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]),
+            dict(type='TopDownGenerateTargetFewShot', sigma=2),
+            dict(
+                type='Collect',
+                keys=['img', 'target', 'target_weight'],
+                meta_keys=[
+                    'image_file', 'joints_3d', 'joints_3d_visible', 'center',
+                    'scale', 'rotation', 'bbox_score', 'flip_pairs',
+                    'category_id', 'flip', 'pair'
+                ])
+        ]))
+shuffle_cfg = dict(interval=1)
+work_dir = 'work_dirs/scape_spilt1'
+gpu_ids = range(0, 1)
+
+2024-10-04 16:00:36,363 - mmpose - INFO - Set random seed to 1, deterministic: True
+2024-10-04 16:00:44,426 - mmpose - INFO - Start running, host: yjliang@amax, work_dir: /data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/SCAPE/tools/work_dirs/scape_spilt1
+2024-10-04 16:00:44,426 - mmpose - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) EvalHook                           
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) CosineAnnealingLrUpdaterHook       
+(NORMAL      ) EvalHook                           
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) EvalHook                           
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(NORMAL      ) ShufflePairedSamplesHook           
+(NORMAL      ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2024-10-04 16:00:44,426 - mmpose - INFO - workflow: [('train', 1)], max: 210 epochs
+2024-10-04 16:00:44,426 - mmpose - INFO - Checkpoints will be saved to /data/yjliang/code/Category-Agnostic-Pose-Estimation/P2/SCAPE/tools/work_dirs/scape_spilt1 by HardDiskBackend.
+2024-10-04 16:01:05,932 - mmpose - INFO - Epoch [1][50/949]	lr: 9.990e-07, eta: 23:47:58, time: 0.430, data_time: 0.112, memory: 4606, l1_loss_layer0: 0.9058, acc_pose: 0.8777, loss: 0.9058
+2024-10-04 16:01:22,885 - mmpose - INFO - Epoch [1][100/949]	lr: 1.998e-06, eta: 21:16:35, time: 0.339, data_time: 0.029, memory: 4606, l1_loss_layer0: 0.3955, acc_pose: 0.1612, loss: 0.3955
+2024-10-04 16:01:40,262 - mmpose - INFO - Epoch [1][150/949]	lr: 2.997e-06, eta: 20:35:16, time: 0.347, data_time: 0.029, memory: 4606, l1_loss_layer0: 0.3238, acc_pose: 0.0471, loss: 0.3238
+2024-10-04 16:01:57,407 - mmpose - INFO - Epoch [1][200/949]	lr: 3.996e-06, eta: 20:10:40, time: 0.343, data_time: 0.030, memory: 4606, l1_loss_layer0: 0.2914, acc_pose: 0.0578, loss: 0.2914
